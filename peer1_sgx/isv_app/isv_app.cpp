@@ -67,8 +67,9 @@
 
 
 // client components
-#define MAX  256
-#define loop while(1)
+#define MAX         256
+#define loop        while(1)
+#define MAX_CLIENTS 10
 
 #ifndef SAFE_FREE
 #define SAFE_FREE(ptr) {if (NULL != (ptr)) {free(ptr); (ptr) = NULL;}}
@@ -770,12 +771,23 @@ int main(int argc, char* argv[]) {
 
     sgx_enclave_id_t enclave_id = 0;
 
-	int sock_fd_server, conn_fd_server, sock_fd_client;
+	int sock_fd_server, conn_fd_server, // master server socket and connection file description with client
+        sock_fd_client, client_socket[MAX_CLIENTS], 
+        index_arr;
 	struct sockaddr_in src_addr, cli;
 	struct sockaddr_in dst_addr;
 	
+    /* init all clients to 0 = not checked */
+    for ( index_arr = 0; index_arr < MAX_CLIENTS; index_arr++ ) {
+        client_socket[index_arr] = 0;
+    }
+	
+	// see here a good example for server
+	// https://www.geeksforgeeks.org/socket-programming-in-cc-handling-multiple-clients-on-server-without-multi-threading/	
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/* SERVER COMPONENT */
-	// socket create
+	// master socket create
 	sock_fd_server = socket(AF_INET, SOCK_STREAM, 0);
 	if (sock_fd_server == -1) {
 		printf ("[PEER1_SGX] Socket creation failed ...\n");
@@ -783,6 +795,8 @@ int main(int argc, char* argv[]) {
 	} else {
 		printf ("[PEER1_SGX] Successfully created the socket ...\n");
 	}
+
+    // set master socket to allow multiple conns TODO
 
 	// assign ip and port - SRC part
 	bzero(&src_addr, sizeof(src_addr));
@@ -835,6 +849,7 @@ int main(int argc, char* argv[]) {
 		// else, continue with looping
 	}
 
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /* CLIENT COMPONENT */
 	printf ("\n[PEER1_SGX] Connect to the server component of PEER2_SGX - socket ip '%s' and port %d\n", argv[2], atoi(argv[3]));
 
